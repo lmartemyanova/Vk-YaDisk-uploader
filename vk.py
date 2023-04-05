@@ -40,6 +40,10 @@ class Vk:
                                     'date': datetime.datetime.fromtimestamp(photo['date']).strftime('%d-%m-%Y'),
                                     'url': size['url']}
                     photos.append(photo_params)
+        likes = [photo['likes'] for photo in photos]
+        for photo in photos:
+            photo['file_name'] = photo['likes'] if likes.count(photo['likes']) == 1 \
+                else f"{photo['likes']}_{photo['date']}"
         def sort_photos(photo):
             if photo['type'] == 'w':
                 return 'zz'
