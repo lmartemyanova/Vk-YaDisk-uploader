@@ -16,14 +16,14 @@ if __name__ == '__main__':
 
     try:
         vk_id = int(vk_id)
-        vk_links = vk_user.get_links(vk_id, photos_count)
+        vk_photos = vk_user.get_links(vk_id, photos_count)
     except ValueError:
         user_id = vk_user.get_id(vk_id)
         vk_photos = vk_user.get_links(user_id, photos_count)
 
     # ya_token = input("Введите токен Вашего Яндекс-диска: ")
-    # ya_uploader = YandexDisk(ya_token)
-    # ya_uploader.upload(vk_photos)
-    # ya_uploader.upload_json(vk_photos)
+    ya_uploader = YandexDisk(ya_token)
+    ya_uploader.upload(vk_photos)
+    ya_uploader.upload_json(vk_photos)
 
 # print(datetime.datetime.now().strftime('%d.%m.%Y_%H:%M'))

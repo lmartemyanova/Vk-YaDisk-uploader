@@ -20,18 +20,19 @@ class YandexDisk:
 
     def create_folder(self):
         headers = self.get_headers()
-        params = {'path': 'vk_copy_' + datetime.datetime.now().strftime('%d.%m.%Y_%H:%M')}
+        folder_name = f"vk_copy_{datetime.datetime.now().strftime('%d.%m.%Y_%H.%M')}"
+        params = {'path': folder_name}
         response = requests.put(self.url, headers=headers, params=params).json()
         folder_href = response['href']
-        return folder_href
+        return folder_href, folder_name
 
     def upload(self, vk_photos):
         """Метод загрузки фото на яндекс диск"""
-        folder_href = self.create_folder()
+        folder_href, folder_name = self.create_folder()
         headers = self.get_headers()
         for photo in vk_photos:
             params = {'url': photo['url'],
-                      'path': f'{folder_href}/{filename}.jpg'}
+                      'path': f'{folder_name}/{photo["file_name"]}.jpg'}
             # sg.one_line_progress_meter('Your progress',
             #                            link + 1,
             #                            len(photos_links),
@@ -39,8 +40,8 @@ class YandexDisk:
             #                            )
             response = requests.post(self.url + '/upload', headers=headers, params=params).json()
             operation = requests.get(response['href']).json()
-            print(f'File {filename} uploaded successfully') if operation['status'] == 'success' \
-                else print(f'File {filename} has not uploaded, try to upload it manually')
+            # print(f'File {filename} uploaded successfully') if operation['status'] == 'success' \
+            #     else print(f'File {filename} has not uploaded, try to upload it manually')
             # time.sleep(1)
         return
 
@@ -49,7 +50,7 @@ class YandexDisk:
         for photo in vk_photos:
             photos_json.append({'file_name': photo['file_name'], 'size': photo['type']})
         headers = self.get_headers()
-        params = {'path': f'{folder_href}/photos.json'}
+        params = {'path': f'{folder_name}/photos.json'}
         response = requests.get(self.url + '/upload', headers=headers, params=params).json()
         href = response['href']
         response = requests.put(href, data=json.dumps(photos_json))
