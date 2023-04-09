@@ -2,6 +2,7 @@ import requests
 from pprint import pprint
 import datetime
 
+
 class Vk:
     url = 'https://api.vk.com/method/'
 
@@ -10,25 +11,25 @@ class Vk:
                        'v': version}
 
     def get_id(self, screen_name):
-        '''To get the user id by screen_name
-        return user_id'''
+        """To get the user id by screen_name
+        return user_id"""
         params = {'screen_name': screen_name}
         response = requests.get(self.url + 'utils.resolveScreenName', params={**self.params, **params}).json()
         user_id = response['response']['object_id']
         return user_id
 
     def get_links(self, user_id, count=5):
-        '''
+        """
         To get the links for uploading profile photos to yandex disk by user id
-        '''
+        """
         params = {
             'owner_id': user_id,
             'album_id': 'profile',
             'extended': 1,
             'photo_sizes': 1
         }
-        response = requests.get(self.url + 'photos.get', params = {**self.params, **params}).json()
-        pprint(response)   # delete
+        response = requests.get(self.url + 'photos.get', params={**self.params, **params}).json()
+        pprint(response)  # delete
         photos = []
         for photo in response['response']['items']:
             photo_types = sorted([size['type'] for size in photo['sizes']])
@@ -44,17 +45,14 @@ class Vk:
         for photo in photos:
             photo['file_name'] = photo['likes'] if likes.count(photo['likes']) == 1 \
                 else f"{photo['likes']}_{photo['date']}"
+
         def sort_photos(photo):
             if photo['type'] == 'w':
                 return 'zz'
             return photo['type']
+
         photos_sorted = sorted(photos, key=sort_photos)
         photos_for_upload = photos_sorted[-count:]
         print(photos_sorted)  # delete
         print(photos_for_upload)  # delete
         return photos_for_upload
-
-
-
-
-

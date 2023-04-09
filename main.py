@@ -1,8 +1,7 @@
-import requests
+# import requests
 from ya_disk import YandexDisk
 from vk import Vk
 from tokens import ya_token, access_token
-import datetime
 
 
 if __name__ == '__main__':
@@ -24,6 +23,6 @@ if __name__ == '__main__':
     # ya_token = input("Введите токен Вашего Яндекс-диска: ")
     ya_uploader = YandexDisk(ya_token)
     ya_uploader.upload(vk_photos)
-    ya_uploader.upload_json(vk_photos)
+    # ya_uploader.upload_json(vk_photos)
 
 # print(datetime.datetime.now().strftime('%d.%m.%Y_%H:%M'))
