@@ -4,3 +4,4 @@
 /.idea
 pyvenv.cfg
 tokens.py
+.env

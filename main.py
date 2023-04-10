@@ -1,12 +1,14 @@
-# import requests
 from ya_disk import YandexDisk
 from vk import Vk
-from tokens import ya_token, access_token
+from tokens import ya_token
+import os
+from dotenv import load_dotenv, find_dotenv
 
 
 if __name__ == '__main__':
 
-    vk_user = Vk(token=access_token)
+    load_dotenv(find_dotenv())
+    vk_user = Vk(token=os.getenv('access_token'))
     vk_id = input("Введите id профиля или короткое имя пользователя, для которого необходимо выполнить копирование: ")
     try:
         photos_count = int(input("Введите количество фото для сохранения (по умолчанию 5): "))
