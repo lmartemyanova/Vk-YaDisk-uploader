@@ -31,13 +31,13 @@ class YandexDisk:
         """Метод загрузки фото на яндекс диск"""
         folder_name = self.create_folder()
         headers = self.get_headers()
-        for photo in vk_photos:
+        for i, photo in enumerate(vk_photos):
             params = {'url': photo['url'],
                       'path': f'{folder_name}/{photo["file_name"]}.jpg'}
             sg.one_line_progress_meter('Your progress',
-                                       len(vk_photos) + 1,
+                                       i + 1,
                                        len(vk_photos),
-                                       '-key-'
+                                       'Загрузка фото на Яндекс Диск:'
                                        )
             response = requests.post(self.url + '/upload', headers=headers, params=params)
             response.raise_for_status()
@@ -53,7 +53,6 @@ class YandexDisk:
                     print(f'Файл {photo["file_name"]}.jpg не загружен, попытайтесь загрузить его вручную, {operation.json()}')
             else:
                 print(f'Ошибка {response.status_code}, попытайтесь загрузить файл {photo["file_name"]}.jpg вручную.')
-            # time.sleep(1)
         return
 
     def upload_json(self, vk_photos):
