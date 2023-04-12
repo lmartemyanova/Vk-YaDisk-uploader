@@ -26,5 +26,3 @@ if __name__ == '__main__':
     ya_uploader = YandexDisk(ya_token)
     ya_uploader.upload(vk_photos)
     # ya_uploader.upload_json(vk_photos)
-
-# print(datetime.datetime.now().strftime('%d.%m.%Y_%H:%M'))

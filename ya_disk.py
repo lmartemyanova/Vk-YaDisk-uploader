@@ -6,13 +6,33 @@ import json
 
 
 class YandexDisk:
+    """
+    Class YandexDisk for uploading files to user's Yandex Disk
+
+    attribute 'url': for requests to REST API Yandex Disk
+
+    """
+
     url = 'https://cloud-api.yandex.net/v1/disk/resources'
 
     def __init__(self, token: str):
+        """
+        To initial the class YandexDisk object
+
+        :param token (str): OAuth token of user's YandexDisk (collected by user input)
+
+        """
+
         self.token = token
 
     def get_headers(self):
-        """Метод получения headers для get-запроса"""
+        """
+        Method of getting headers for requests
+
+        :return headers (dict)
+
+        """
+
         headers = {
             'Accept': 'application/json',
             'Authorization': f'OAuth {self.token}'
@@ -20,15 +40,33 @@ class YandexDisk:
         return headers
 
     def create_folder(self):
+        """
+        Method allows to create a folder in user's Yandex Disk files
+        in the format 'vk_copy_DD.MM.YYYY_HH.MM' (the current date and time)
+
+        :return folder_name (str)
+
+        """
+
         headers = self.get_headers()
         folder_name = f"vk_copy_{datetime.datetime.now().strftime('%d.%m.%Y_%H.%M')}"
         params = {'path': folder_name}
         response = requests.put(self.url, headers=headers, params=params).json()
-        # folder_href = response['href']
         return folder_name
 
     def upload(self, vk_photos):
-        """Метод загрузки фото на яндекс диск"""
+        """
+        Method for uploading photos from vk id
+        by post-request to REST API Yandex Disk;
+        progress bar added to to track the progress of the program
+
+        :param vk_photos: list of dicts with photo information:
+        'likes', 'type', 'date', 'url', 'file_name'
+
+        :return: None
+
+        """
+
         folder_name = self.create_folder()
         headers = self.get_headers()
         for i, photo in enumerate(vk_photos):
@@ -56,6 +94,16 @@ class YandexDisk:
         return
 
     def upload_json(self, vk_photos):
+        """
+        To upload json-file with photo information: 'file_name', 'size' (type)
+
+        :param vk_photos: list of dicts with photo information:
+        'likes', 'type', 'date', 'url', 'file_name'
+
+        :return info about uploading the json file (str)
+
+        """
+
         photos_json = []
         for photo in vk_photos:
             photos_json.append({'file_name': photo['file_name'], 'size': photo['type']})
@@ -65,5 +113,5 @@ class YandexDisk:
         href = response['href']
         response = requests.put(href, data=json.dumps(photos_json))
         response.raise_for_status()
-        print("Json успешно загружен") if response.status_code == 201 else print("Ошибка загрузки json")
-        return
+        res = print("Json успешно загружен") if response.status_code == 201 else print("Ошибка загрузки json")
+        return res
