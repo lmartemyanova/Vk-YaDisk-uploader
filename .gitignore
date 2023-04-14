@@ -3,5 +3,5 @@
 /Scripts
 /.idea
 pyvenv.cfg
-tokens.py
 .env
+/__pycache__
