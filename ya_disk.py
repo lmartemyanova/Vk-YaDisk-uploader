@@ -49,7 +49,7 @@ class YandexDisk:
         """
 
         headers = self.get_headers()
-        folder_name = f"vk_copy_{datetime.datetime.now().strftime('%d.%m.%Y_%H.%M')}"
+        folder_name = f"vk_copy_{datetime.datetime.now().strftime('%d.%m.%Y')}"
         params = {'path': folder_name}
         response = requests.put(self.url, headers=headers, params=params).json()
         return folder_name
@@ -58,7 +58,9 @@ class YandexDisk:
         """
         Method for uploading photos from vk id
         by post-request to REST API Yandex Disk;
-        progress bar added to to track the progress of the program
+        progress bar added to to track the progress of the program.
+        Display not uploaded (errors) photos names if any
+        afler the upload is completed.
 
         :param vk_photos: list of dicts with photo information:
         'likes', 'type', 'date', 'url', 'file_name'
@@ -69,28 +71,34 @@ class YandexDisk:
 
         folder_name = self.create_folder()
         headers = self.get_headers()
+        errors = []
         for i, photo in enumerate(vk_photos):
             params = {'url': photo['url'],
                       'path': f'{folder_name}/{photo["file_name"]}.jpg'}
-            sg.one_line_progress_meter('Your progress',
-                                       i + 1,
-                                       len(vk_photos),
-                                       'Загрузка фото на Яндекс Диск:'
-                                       )
             response = requests.post(self.url + '/upload', headers=headers, params=params)
-            response.raise_for_status()
-            if response.status_code == 202:
+            if response.status_code != 202:
+                errors.append(f"{photo['file_name']}.jpg")
+            elif response.status_code == 202:
                 operation_href = response.json()['href']
                 operation = requests.get(url=operation_href, headers=self.get_headers())
                 operation.raise_for_status()
                 while operation.json()['status'] == 'in-progress':
                     operation = requests.get(url=operation_href, headers=self.get_headers())
                 if operation.json()['status'] == 'success':
-                    print(f'Файл {photo["file_name"]}.jpg успешно загружен')
+                    print(f'Файл {photo["file_name"]}.jpg успешно загружен.')
                 else:
-                    print(f'Файл {photo["file_name"]}.jpg не загружен, попытайтесь загрузить его вручную, {operation.json()}')
+                    print(f'Файл {photo["file_name"]}.jpg не загружен, попытайтесь загрузить его вручную.')
+                    errors.append(f"{photo['file_name']}.jpg")
+                sg.one_line_progress_meter('Your progress',
+                                           i + 1,
+                                           len(vk_photos),
+                                           'Загрузка фото на Яндекс Диск:')
             else:
                 print(f'Ошибка {response.status_code}, попытайтесь загрузить файл {photo["file_name"]}.jpg вручную.')
+        if len(errors) > 0:
+            sg.popup(f"Следующие файлы не были загружены:\n {'; '.join(errors)}")
+        else:
+            sg.popup("Все файлы успешно загружены!")
         return
 
     def upload_json(self, vk_photos):
@@ -108,10 +116,15 @@ class YandexDisk:
         for photo in vk_photos:
             photos_json.append({'file_name': photo['file_name'], 'size': photo['type']})
         headers = self.get_headers()
-        params = {'path': f'{folder_name}/photos.json'}
+        folder_name = self.create_folder()
+        params = {'path': f'{folder_name}/photos.json', 'overwrite': True}
         response = requests.get(self.url + '/upload', headers=headers, params=params).json()
         href = response['href']
         response = requests.put(href, data=json.dumps(photos_json))
         response.raise_for_status()
         res = print("Json успешно загружен") if response.status_code == 201 else print("Ошибка загрузки json")
+        if response.status_code == 201:
+            sg.popup("Json успешно загружен")
+        else:
+            sg.popup("Ошибка загрузки json")
         return res

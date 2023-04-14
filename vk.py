@@ -64,7 +64,6 @@ class Vk:
             'photo_sizes': 1
         }
         response = requests.get(self.url + 'photos.get', params={**self.params, **params}).json()
-        pprint(response)  # delete
         photos = []
         for photo in response['response']['items']:
             photo_types = sorted([size['type'] for size in photo['sizes']])
@@ -89,6 +88,4 @@ class Vk:
 
         photos_sorted = sorted(photos, key=sort_photos)
         photos_for_upload = photos_sorted[-count:]
-        print(photos_sorted)  # delete
-        print(photos_for_upload)  # delete
         return photos_for_upload
