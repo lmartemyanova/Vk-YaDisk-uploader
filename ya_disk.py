@@ -84,17 +84,14 @@ class YandexDisk:
                 operation.raise_for_status()
                 while operation.json()['status'] == 'in-progress':
                     operation = requests.get(url=operation_href, headers=self.get_headers())
-                if operation.json()['status'] == 'success':
-                    print(f'Файл {photo["file_name"]}.jpg успешно загружен.')
-                else:
-                    print(f'Файл {photo["file_name"]}.jpg не загружен, попытайтесь загрузить его вручную.')
+                if operation.json()['status'] != 'success':
                     errors.append(f"{photo['file_name']}.jpg")
                 sg.one_line_progress_meter('Your progress',
                                            i + 1,
                                            len(vk_photos),
                                            'Загрузка фото на Яндекс Диск:')
             else:
-                print(f'Ошибка {response.status_code}, попытайтесь загрузить файл {photo["file_name"]}.jpg вручную.')
+                errors.append(f"{photo['file_name']}.jpg")
         if len(errors) > 0:
             sg.popup(f"Следующие файлы не были загружены:\n {'; '.join(errors)}")
         else:
