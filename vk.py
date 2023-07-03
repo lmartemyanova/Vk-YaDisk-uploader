@@ -1,6 +1,11 @@
+import os.path
+
 import requests
 from pprint import pprint
 import datetime
+import time
+
+from vk_save_logger import save_logger
 
 
 class Vk:
@@ -39,7 +44,7 @@ class Vk:
         user_id = response['response']['object_id']
         return user_id
 
-    def get_links(self, user_id, count=5):
+    def get_links(self, user_id):
         """
         To get the links for uploading profile photos to yandex disk by user id
 
@@ -56,6 +61,11 @@ class Vk:
         dict (photo) keys: 'likes', 'type', 'date', 'url', 'file_name'
 
         """
+
+        try:
+            count = int(input("Введите количество фото для сохранения (по умолчанию 5): "))
+        except ValueError:
+            count = 5
 
         params = {
             'owner_id': user_id,
@@ -89,3 +99,101 @@ class Vk:
         photos_sorted = sorted(photos, key=sort_photos)
         photos_for_upload = photos_sorted[-count:]
         return photos_for_upload
+
+    def create_album(self):
+        title = str(input('Введите название альбома (минимум 2 символа): '))
+        description = str(input('Введите описание альбома (необязательно): '))
+        print("Конфиденциальность альбома: "
+              "0 - все пользователи, "
+              "1 - только друзья, "
+              "2 - друзья и друзья друзей, "
+              "3 - только я")
+        privacy = {
+            '0': 'all',
+            '1': 'friends',
+            '2': 'friends_of_friends',
+            '3': 'only_me'
+        }
+        privacy_view = str(input('Введите уровень доступа (3 по умолчанию) - кто может смотреть альбом: '))
+        privacy_comment = str(input('Введите уровень доступа (3 по умолчанию) - кто может комментировать фото: '))
+        params = {
+            'title': title,
+            'description': description,
+            'privacy_view': privacy[privacy_view],
+            'privacy_comment': privacy[privacy_comment]
+        }
+        try:
+            response = requests.get(
+                url=self.url + 'photos.createAlbum',
+                params={**self.params, **params}
+            )
+            if response.status_code == 200:
+                album_id = response.json()['response']['id']
+                print(f"Альбом с id {album_id} успешно создан")
+                return album_id
+        except Exception as e:
+            print(f'Альбом не создан: {e}')
+            return
+
+    def get_upload_server(self):
+        print('Вы хотите создать новый альбом (Y) или загрузить фото в существующий (N)?')
+        command = input('Y/N? ')
+        if command.lower() == 'y':
+            album_id = self.create_album()
+        elif command.lower() == 'n':
+            album_id = int(input('Введите идентификатор альбома (он находится в адресной строке после знака _): '))
+        else:
+            print('неверный ввод')
+            return
+        params = {
+            'album_id': album_id
+        }
+        try:
+            response = requests.get(url=self.url + 'photos.getUploadServer', params={**self.params, **params})
+            if response.status_code == 200:
+                upload_url = response.json()['response']['upload_url']
+                return upload_url
+        except Exception as e:
+            print(f'Доступ к загрузке отклонен: {e}')
+            return
+
+    # @save_logger
+    def upload_photos(self):
+        server = self.get_upload_server()
+        folder = str(input("Введите путь к папке, из которой нужно загрузить фото: "))
+        for root, dirs, files in os.walk(folder):
+            photos_lists = [os.path.join(folder, file) for file in files]
+        while photos_lists:
+            # data = {
+            #     'file1': (None, photos_lists[0]),
+            #     'file2': (None, photos_lists[1]),
+            #     'file3': (None, photos_lists[2]),
+            #     'file4': (None, photos_lists[3]),
+            #     'file5': (None, photos_lists[4])
+            # }
+            data = [
+                ('file1', (photos_lists[0], open(f'{photos_lists[0]}', 'rb'), 'image/png')),
+                ('file2', (photos_lists[1], open(f'{photos_lists[1]}', 'rb'), 'image/png')),
+                ('file3', (photos_lists[2], open(f'{photos_lists[2]}', 'rb'), 'image/png')),
+                ('file4', (photos_lists[3], open(f'{photos_lists[3]}', 'rb'), 'image/png')),
+                ('file5', (photos_lists[4], open(f'{photos_lists[4]}', 'rb'), 'image/png'))
+            ]
+            del photos_lists[0:4]
+            try:
+                response = requests.post(url=server, files=data)
+                if response.status_code == 200:
+                    params_save = response.json()
+                    params_save['album_id'] = params_save.pop('aid')
+                    try:
+                        response_save = requests.get(url=self.url + 'photos.save',
+                                                     params={**self.params, **params_save})
+                        if response_save.status_code == 200:
+                            # print(f'Фото загружены в альбом {response_save.json()["response"]["album_id"]}')
+                            time.sleep(5)
+                            # return response_save.json()
+                    except Exception as e:
+                        print(f'{e}')
+                        return
+            except Exception as e:
+                print(f'{e}')
+                return
