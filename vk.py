@@ -162,23 +162,26 @@ class Vk:
         server = self.get_upload_server()
         folder = str(input("Введите путь к папке, из которой нужно загрузить фото: "))
         for root, dirs, files in os.walk(folder):
-            photos_lists = [os.path.join(folder, file) for file in files]
+            photos_lists = [os.path.join(folder, file) for file
+                            in list(sorted(files, key=lambda x: (int(''.join(filter(str.isdigit, x.split('.')[0]))), x)))
+                            if file.endswith('.JPG') or file.endswith('.PNG')
+                            or file.endswith('.jpg') or file.endswith('.png')]
+            # need better sort?
         while photos_lists:
-            # data = {
-            #     'file1': (None, photos_lists[0]),
-            #     'file2': (None, photos_lists[1]),
-            #     'file3': (None, photos_lists[2]),
-            #     'file4': (None, photos_lists[3]),
-            #     'file5': (None, photos_lists[4])
-            # }
-            data = [
-                ('file1', (photos_lists[0], open(f'{photos_lists[0]}', 'rb'), 'image/png')),
-                ('file2', (photos_lists[1], open(f'{photos_lists[1]}', 'rb'), 'image/png')),
-                ('file3', (photos_lists[2], open(f'{photos_lists[2]}', 'rb'), 'image/png')),
-                ('file4', (photos_lists[3], open(f'{photos_lists[3]}', 'rb'), 'image/png')),
-                ('file5', (photos_lists[4], open(f'{photos_lists[4]}', 'rb'), 'image/png'))
-            ]
-            del photos_lists[0:4]
+            if len(photos_lists) < 5:
+                data = [
+                    ('file1', (photos_lists[0], open(f'{photos_lists[0]}', 'rb'), 'image/png')),
+                ]
+                del photos_lists[0]
+            else:
+                data = [
+                    ('file1', (photos_lists[0], open(f'{photos_lists[0]}', 'rb'), 'image/png')),
+                    ('file2', (photos_lists[1], open(f'{photos_lists[1]}', 'rb'), 'image/png')),
+                    ('file3', (photos_lists[2], open(f'{photos_lists[2]}', 'rb'), 'image/png')),
+                    ('file4', (photos_lists[3], open(f'{photos_lists[3]}', 'rb'), 'image/png')),
+                    ('file5', (photos_lists[4], open(f'{photos_lists[4]}', 'rb'), 'image/png'))
+                ]
+                del photos_lists[0:5]
             try:
                 response = requests.post(url=server, files=data)
                 if response.status_code == 200:
@@ -188,8 +191,8 @@ class Vk:
                         response_save = requests.get(url=self.url + 'photos.save',
                                                      params={**self.params, **params_save})
                         if response_save.status_code == 200:
-                            # print(f'Фото загружены в альбом {response_save.json()["response"]["album_id"]}')
-                            time.sleep(5)
+                            print('Фото загружены в альбом')
+                            time.sleep(3)
                             # return response_save.json()
                     except Exception as e:
                         print(f'{e}')
