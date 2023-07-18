@@ -5,7 +5,7 @@ from pprint import pprint
 import datetime
 import time
 
-from vk_save_logger import save_logger
+# from vk_save_logger import save_logger
 
 
 class Vk:

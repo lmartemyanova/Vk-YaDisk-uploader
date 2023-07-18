@@ -1,5 +1,4 @@
-from ya_disk import YandexDisk
-from vk import Vk
+from vk.vk import Vk
 import os
 from dotenv import load_dotenv, find_dotenv
 
