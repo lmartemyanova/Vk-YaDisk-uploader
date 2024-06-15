@@ -44,14 +44,18 @@ class YandexDiskFormat:
         return headers
 
     def get_directory(self):
-        path = str(input("Введите название папки: "))
+        """
+        To get the folder in user's Yandex disk where are the .heic files situated.
+        :return: folder name (str)
+        """
+        path = str(input("Введите название папки на Яндекс диске: "))
         return path
 
     def get_files_list(self, path):
         """
 
-        :param link:
-        :return:
+        :param path: folder name in user's Yandex disk (str)
+        :return: list of files (str) in folder
         """
 
         headers = self.get_headers()
@@ -61,7 +65,12 @@ class YandexDiskFormat:
         return files
 
     def get_upload_link(self, file_path):
-        """Метод получения ссылки для загрузки файла на яндекс диск"""
+        """
+        Method to get the link to upload file to Yandex disk
+        :param file_path: file name in folder (str)
+        :return: upload link (str)
+        """
+
         url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         headers = self.get_headers()
         params = {'path': file_path}
@@ -71,7 +80,8 @@ class YandexDiskFormat:
 
     def change_heic_to_jpg(self):
         """
-
+        If files in folder has the format .heic this method allows to change the format to .jpg.
+        The result is the double files in user's folder: in .heic and in .jpg.
         :return:
         """
         directory = self.get_directory()
@@ -100,12 +110,42 @@ class YandexDiskFormat:
 
     def change_heic_to_png(self):
         """
-
+        If files in folder has the format .heic this method allows to change the format to .png.
+        The result is the double files in user's folder: in .heic and in .png.
         :return:
         """
+        directory = self.get_directory()
+        files = self.get_files_list(directory)
+        for f in files:
+            if f["mime_type"] == "image/heic":
+                url = f["file"]
+
+                load_dotenv(find_dotenv())
+                convertapi.api_secret = os.getenv('api-secret')
+                convertapi.convert('png', {
+                    'File': url
+                }, from_format='heic').save_files(os.path.join(os.getcwd(), "files"))
+
+        folder = os.listdir(os.path.join(os.getcwd(), "files"))
+        for i in folder:
+            photo = os.path.join(os.path.join(os.getcwd(), "files"), i)
+            href = self.get_upload_link(f"{directory}/{i}")
+            with open(photo, 'rb') as f:
+                response = requests.put(href, data=f)
+
+        for i in folder:
+            os.remove(os.path.join(os.path.join(os.getcwd(), "files"), i))
+
+        return "Success"
 
 
 if __name__ == "__main__":
     load_dotenv(find_dotenv())
     ya_user = YandexDiskFormat(token=os.getenv('ya_token'))
-    ya_user.change_heic_to_jpg()
+    choice = int(input("В какой формат Вы хотите сконвертировать фото, .jpg (1) или .png (2)? "))
+    if choice == 1:
+        ya_user.change_heic_to_jpg()
+    elif choice == 2:
+        ya_user.change_heic_to_png()
+    else:
+        "Какая-то ошибка :( Попробуйте запустить файл снова!"
